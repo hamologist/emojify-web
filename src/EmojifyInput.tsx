@@ -1,4 +1,8 @@
 import React, { ChangeEvent } from "react";
+import { Button } from "@material-ui/core";
+import TextField from "@material-ui/core/TextField";
+import Grid from "@material-ui/core/Grid";
+import styles from './EmojifyInput.module.css';
 
 type State = {
   input: string
@@ -14,29 +18,33 @@ class EmojifyInput extends React.Component<object, State> {
     }
   }
 
-  async submit() {
+  async emojify() {
     try {
-      let response = await fetch('/emojify', {
+      let response = await fetch('https://emojify.hamologist.com/emojify', {
         method: 'POST',
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: this.state.input,
+          message: this.state.input
+            .replaceAll('\n', '\\\\n')
+            .replaceAll('\r', '\\\\r'),
         })
       })
 
       let json = await response.json();
       this.setState({
         output: json.message
+          .replaceAll('\\n', '\n')
+          .replaceAll('\\r', '\r')
       })
     } catch (error) {
       console.error(error)
     }
   }
 
-  inputChange(event: ChangeEvent<HTMLTextAreaElement>) {
+  inputChange(event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) {
     this.setState({
       input: event.target.value
     })
@@ -44,23 +52,40 @@ class EmojifyInput extends React.Component<object, State> {
 
   render() {
     return (
-      <div className="EmojifyInput">
-        <textarea
-          rows={4}
-          cols={50}
-          className="input"
-          onChange={(event) => this.inputChange(event)}
-          value={this.state.input}/>
-        <textarea
-          rows={4}
-          cols={50}
-          className="output"
-          value={this.state.output}/>
-        <br />
-        <button
-          className="submit"
-          onClick={() => this.submit()}
-        >Submit</button>
+      <div className={styles.root}>
+        <Grid container className={styles.container} spacing={3}>
+          <Grid item xs={12} md={6} className={styles.item}>
+            <TextField
+              id="outlined-muliline-static"
+              label="Input"
+              multiline
+              onChange={(event) => this.inputChange(event)}
+              rows={12}
+              fullWidth={true}
+              value={this.state.input}
+            />
+          </Grid>
+          <Grid item xs={12} md={6} className={styles.item}>
+            <TextField
+              id="outlined-muliline-static"
+              label="Output"
+              multiline
+              rows={12}
+              fullWidth={true}
+              value={this.state.output}
+              InputProps={{
+                readOnly: true
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} className={styles.item}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => this.emojify()}
+            >Emojify</Button>
+          </Grid>
+        </Grid>
       </div>
     );
   }
